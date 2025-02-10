@@ -180,9 +180,6 @@ def generate_pdf_documentation(api_name, api_version, api_key):
     # Start documenting from root resources
     for resource_name, resource in api_response.get('resources', {}).items():
         document_resource(resource, resource_name)
-
-        # AI-generated content
-        ai_prompt = f"""
         For the {api_name} API endpoint: {endpoint['httpMethod']} {endpoint['id']}
         Generate:
         1. A friendly technical description with common use cases.
