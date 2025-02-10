@@ -118,7 +118,16 @@ def generate_pdf_documentation(api_name, api_version, api_key):
 
     # Fetch API details
     service = build('discovery', 'v1')
-    api_response = service.apis().getRest(api=api_name, version=api_version).execute()
+    
+    # First get the API info to get the correct version
+    api_list = get_api_list()
+    selected_api = next((api for api in api_list if api['name'] == api_name), None)
+    
+    if not selected_api:
+        raise Exception(f"API {api_name} not found")
+        
+    correct_version = selected_api['version']
+    api_response = service.apis().getRest(api=api_name, version=correct_version).execute()
 
     # API Overview
     pdf.chapter_title(f"{api_name} API Documentation")
