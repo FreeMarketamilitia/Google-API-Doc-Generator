@@ -268,14 +268,10 @@ def generate_colab_notebook(api_name, api_version, notebook_filename, api_key):
                     ]
                     notebook['cells'].extend(cells)
 
-    # Format the notebook as JSON properly 
-    formatted_json = json.dumps(notebook, indent=2, ensure_ascii=False)
-
-    # Save with proper JSON formatting
+    # Save the notebook
     with open(notebook_filename, 'w', encoding='utf-8') as f:
-        f.write(formatted_json)
+        json.dump(notebook, f, indent=2)
     
-    # Update mimetype in download route
     return notebook_filename
 
 
@@ -336,7 +332,7 @@ def download_doc(doc_type, api_name):
             download_name = f"{api_name}_documentation.pdf"
         else:  # notebook
             file_path = os.path.join(output_dir, f"{api_name}_colab_notebook.ipynb")
-            mimetype = 'application/x-ipynb+json'
+            mimetype = 'application/json'
             download_name = f"{api_name}_colab_notebook.ipynb"
 
         return send_file(file_path, 
