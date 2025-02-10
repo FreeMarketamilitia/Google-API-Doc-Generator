@@ -199,9 +199,79 @@ def generate_pdf_documentation(api_name, api_version, api_key):
     return pdf_filename
 
 def generate_colab_notebook(api_name, api_version, notebook_filename, api_key):
-    #Implementation for generating colab notebook.  This function was not provided in the original code, but is referenced.  A placeholder implementation is provided below, but a full implementation would be needed for a production-ready application
-    with open(notebook_filename, 'w') as f:
-        json.dump({"cells":[{"cell_type":"markdown", "metadata":{},"source":["# Colab Notebook for "+api_name]}]}, f)
+    """Generate a Colab notebook with interactive API examples."""
+    service = build('discovery', 'v1')
+    api_response = service.apis().getRest(api=api_name, version=api_version).execute()
+
+    notebook = {
+        "cells": [
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    f"# 🚀 {api_name} API Interactive Notebook ({api_version})\n",
+                    "This notebook provides examples and documentation for using the API."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "metadata": {},
+                "source": [
+                    "!pip install google-api-python-client",
+                    "\nfrom googleapiclient.discovery import build",
+                    "\n# Initialize the API client",
+                    f"\nservice = build('{api_name}', '{api_version}')",
+                    "\nprint('✅ API client initialized successfully!')"
+                ]
+            }
+        ],
+        "metadata": {
+            "colab": {
+                "name": f"{api_name} API Examples",
+                "provenance": [],
+                "toc_visible": True
+            },
+            "kernelspec": {
+                "display_name": "Python 3",
+                "name": "python3"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 4
+    }
+
+    # Add documentation and examples for each method
+    if 'resources' in api_response:
+        for resource_name, resource in api_response['resources'].items():
+            if 'methods' in resource:
+                for method_name, method in resource['methods'].items():
+                    cells = [
+                        {
+                            "cell_type": "markdown",
+                            "metadata": {},
+                            "source": [
+                                f"## {method_name}\n",
+                                f"**HTTP Method:** {method.get('httpMethod', 'N/A')}\n",
+                                f"**Path:** {method.get('path', 'N/A')}\n",
+                                f"\n{method.get('description', 'No description available.')}"
+                            ]
+                        },
+                        {
+                            "cell_type": "code",
+                            "metadata": {},
+                            "source": [
+                                f"# Example usage of {method_name}",
+                                f"\nresponse = service.{resource_name}().{method_name}().execute()",
+                                "\nprint(response)"
+                            ]
+                        }
+                    ]
+                    notebook['cells'].extend(cells)
+
+    # Save the notebook
+    with open(notebook_filename, 'w', encoding='utf-8') as f:
+        json.dump(notebook, f, indent=2)
+    
     return notebook_filename
 
 
