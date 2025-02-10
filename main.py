@@ -88,9 +88,9 @@ def get_api_list():
         
         while True:
             # Get current page of results
-            request = service.apis().list(preferred=True, fields='items,nextPageToken')
+            request = service.apis().list(preferred=True)
             if page_token:
-                request = service.apis().list(preferred=True, pageToken=page_token, fields='items,nextPageToken')
+                request = service.apis().list(preferred=True, pageToken=page_token)
             apis_response = request.execute()
             
             # Add items from current page
