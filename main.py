@@ -271,11 +271,11 @@ def generate_colab_notebook(api_name, api_version, notebook_filename, api_key):
     # Format the notebook as JSON properly 
     formatted_json = json.dumps(notebook, indent=2, ensure_ascii=False)
 
-    # Save with proper JSON formatting
+    # Save notebook in Jupyter format
+    notebook_json = json.loads(formatted_json)
     with open(notebook_filename, 'w', encoding='utf-8') as f:
-        f.write(formatted_json)
+        json.dump(notebook_json, f, indent=2, ensure_ascii=False)
     
-    # Update mimetype in download route
     return notebook_filename
 
 
