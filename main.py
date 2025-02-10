@@ -88,9 +88,9 @@ def get_api_list():
         
         while True:
             # Get current page of results
-            request = service.apis().list(preferred=True)
+            request = service.apis().list(preferred=True, fields='items,nextPageToken')
             if page_token:
-                request.pageToken = page_token
+                request = service.apis().list(preferred=True, pageToken=page_token, fields='items,nextPageToken')
             apis_response = request.execute()
             
             # Add items from current page
@@ -101,8 +101,10 @@ def get_api_list():
             page_token = apis_response.get('nextPageToken')
             if not page_token:
                 break
-                
+        
+        # Sort APIs by name
         if all_apis:
+            all_apis.sort(key=lambda x: x.get('title', '').lower())
             return all_apis
             
         logging.warning("No APIs found in response")
@@ -127,7 +129,13 @@ def generate_pdf_documentation(api_name, api_version, api_key):
         raise Exception(f"API {api_name} not found")
         
     correct_version = selected_api['version']
-    api_response = service.apis().getRest(api=api_name, version=correct_version).execute()
+    
+    # Get complete API description with all resources
+    api_response = service.apis().getRest(
+        api=api_name,
+        version=correct_version,
+        fields='*'
+    ).execute()
 
     # API Overview
     pdf.chapter_title(f"{api_name} API Documentation")

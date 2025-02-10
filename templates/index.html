@@ -21,6 +21,9 @@
 
                     {% if apis %}
                     <div class="mb-3">
+                        <label for="api_search" class="form-label">Search APIs:</label>
+                        <input type="text" class="form-control mb-2" id="api_search" placeholder="Search APIs...">
+                        
                         <label for="api_name" class="form-label">Select API:</label>
                         <select class="form-select" id="api_name" name="api_name" required>
                             <option value="">Choose an API...</option>
@@ -60,5 +63,17 @@
             </div>
         </div>
     </div>
+    <script>
+        document.getElementById('api_search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const select = document.getElementById('api_name');
+            const options = select.getElementsByTagName('option');
+            
+            for (let option of options) {
+                const text = option.text.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? '' : 'none';
+            }
+        });
+    </script>
 </body>
 </html>
