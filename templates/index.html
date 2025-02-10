@@ -13,10 +13,11 @@
 
                 <form method="POST">
                     <div class="mb-3">
-                        <label for="api_key" class="form-label">Google API Key:</label>
+                        <label for="api_key" class="form-label">Mistral API Key:</label>
                         <input type="text" class="form-control" id="api_key" name="api_key" required 
-                               placeholder="Enter your Google API key"
+                               placeholder="Enter your Mistral API key"
                                value="{{ request.form.get('api_key', '') }}">
+                        <small class="form-text text-muted">Get your free API key from <a href="https://mistral.ai" target="_blank">mistral.ai</a></small>
                     </div>
 
                     {% if apis %}

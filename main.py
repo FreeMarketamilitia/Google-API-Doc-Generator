@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
 import google.auth
 from googleapiclient.discovery import build
-import google.generativeai as genai
 import os
 from rich.console import Console
 from rich.table import Table
@@ -9,6 +8,8 @@ from fpdf import FPDF
 import json
 import tempfile
 import logging
+import time
+from mistralai import Mistral
 
 app = Flask(__name__)
 console = Console()
@@ -18,10 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Set up the API keys for Google services
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyCIpaomykk6kw0EXh2xcZ5Abbz-cb4y9KE")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-# Gemini safety settings
-GEMINI_SAFETY_SETTINGS = [
+MISTRAL_MODEL = "mistral-small-latest"
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
@@ -56,27 +54,21 @@ class APIDocumentationPDF(FPDF):
         self.multi_cell(0, 5, code, fill=True)
         self.ln(5)
 
-def generate_with_gemini(prompt, api_key):
-    """Generate content using Gemini API."""
+def generate_with_mistral(prompt, api_key):
+    """Generate content using Mistral API."""
     if not api_key:
         return None
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro')
     try:
-        response = model.generate_content(
-            prompt,
-            safety_settings=GEMINI_SAFETY_SETTINGS,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.3,
-                top_p=0.95,
-                top_k=40,
-                max_output_tokens=512
-            )
+        time.sleep(1)  # Rate limit: 1 request per second
+        client = Mistral(api_key=api_key)
+        response = client.chat.complete(
+            model=MISTRAL_MODEL,
+            messages=[{"role": "user", "content": prompt}]
         )
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
-        logging.error(f"Gemini API error: {str(e)}")
+        logging.error(f"Mistral API error: {str(e)}")
         return None
 
 def get_api_list():
