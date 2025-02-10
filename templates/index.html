@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+    <title>Google API Documentation Generator</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Google API Documentation Generator</h1>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="api_key" class="form-label">Google API Key:</label>
+                        <input type="text" class="form-control" id="api_key" name="api_key" required 
+                               placeholder="Enter your Google API key"
+                               value="{{ request.form.get('api_key', '') }}">
+                    </div>
+
+                    {% if apis %}
+                    <div class="mb-3">
+                        <label for="api_name" class="form-label">Select API:</label>
+                        <select class="form-select" id="api_name" name="api_name" required>
+                            <option value="">Choose an API...</option>
+                            {% for api in apis %}
+                            <option value="{{ api.name }}">{{ api.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Output Format:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="output_format" 
+                                   id="format_colab" value="colab" checked>
+                            <label class="form-check-label" for="format_colab">
+                                Colab Notebook
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="output_format" 
+                                   id="format_pdf" value="pdf">
+                            <label class="form-check-label" for="format_pdf">
+                                PDF Documentation
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Generate Documentation</button>
+                    </div>
+                    {% endif %}
+                </form>
+
+                {% if message %}
+                <div class="alert alert-{{ 'danger' if error else 'success' }} mt-3">
+                    {{ message }}
+                </div>
+                {% endif %}
+
+                {% if pdf_path %}
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('download_pdf', api_name=request.form.get('api_name')) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Download PDF Documentation
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
