@@ -151,7 +151,7 @@ def generate_pdf_documentation(api_name, api_version, api_key):
             2. Example request with placeholder values.
             3. Common parameters and their purposes.
             """
-            ai_content = generate_with_gemini(ai_prompt, api_key)
+            ai_content = generate_with_mistral(ai_prompt, api_key)
             if ai_content:
                 pdf.chapter_title("AI-Generated Documentation")
                 pdf.chapter_body(ai_content)
@@ -162,7 +162,7 @@ def generate_pdf_documentation(api_name, api_version, api_key):
             Service: {method['id']}
             Include realistic parameters and error handling.
             """
-            code_example = generate_with_gemini(example_prompt, api_key)
+            code_example = generate_with_mistral(example_prompt, api_key)
             if code_example:
                 pdf.chapter_title("Example Code")
                 pdf.code_section(code_example)
