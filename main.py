@@ -80,12 +80,31 @@ def generate_with_gemini(prompt, api_key):
         return None
 
 def get_api_list():
-    """Fetch available APIs using Google Discovery API."""
+    """Fetch all available APIs using Google Discovery API with pagination."""
     try:
         service = build('discovery', 'v1')
-        apis_response = service.apis().list(preferred=True).execute()
-        if 'items' in apis_response:
-            return apis_response['items']
+        all_apis = []
+        page_token = None
+        
+        while True:
+            # Get current page of results
+            apis_response = service.apis().list(
+                preferred=True,
+                pageToken=page_token
+            ).execute()
+            
+            # Add items from current page
+            if 'items' in apis_response:
+                all_apis.extend(apis_response['items'])
+            
+            # Check if there are more pages
+            page_token = apis_response.get('nextPageToken')
+            if not page_token:
+                break
+                
+        if all_apis:
+            return all_apis
+            
         logging.warning("No APIs found in response")
         return None
     except Exception as e:
