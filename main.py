@@ -3,14 +3,12 @@ import google.auth
 from googleapiclient.discovery import build
 import google.generativeai as genai
 import os
-import time
 from rich.console import Console
 from rich.table import Table
 from fpdf import FPDF
 import json
 import tempfile
 import logging
-from mistralai import Mistral
 
 app = Flask(__name__)
 console = Console()
@@ -18,11 +16,9 @@ console = Console()
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Set up API keys and configurations
+# Set up the API keys for Google services
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyCIpaomykk6kw0EXh2xcZ5Abbz-cb4y9KE")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "xseJAyOQfSU6OjS2CylZkTStDw0nAag9")
-MISTRAL_MODEL = "mistral-small-latest"
 
 # Gemini safety settings
 GEMINI_SAFETY_SETTINGS = [
@@ -61,36 +57,26 @@ class APIDocumentationPDF(FPDF):
         self.ln(5)
 
 def generate_with_gemini(prompt, api_key):
-    """Generate content using Gemini API, with fallback to Mistral API if needed."""
-    if api_key:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
-        try:
-            response = model.generate_content(
-                prompt,
-                safety_settings=GEMINI_SAFETY_SETTINGS,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.3,
-                    top_p=0.95,
-                    top_k=40,
-                    max_output_tokens=512
-                )
-            )
-            return response.text
-        except Exception as e:
-            logging.error(f"Gemini API error: {str(e)}. Switching to Mistral.")
+    """Generate content using Gemini API."""
+    if not api_key:
+        return None
 
-    # Fallback to Mistral if Gemini fails
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-pro')
     try:
-        time.sleep(1)  # Respect Mistral's rate limit
-        client = Mistral(api_key=MISTRAL_API_KEY)
-        response = client.chat.complete(
-            model=MISTRAL_MODEL,
-            messages=[{"role": "user", "content": prompt}]
+        response = model.generate_content(
+            prompt,
+            safety_settings=GEMINI_SAFETY_SETTINGS,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3,
+                top_p=0.95,
+                top_k=40,
+                max_output_tokens=512
+            )
         )
-        return response.choices[0].message.content
+        return response.text
     except Exception as e:
-        logging.error(f"Mistral API error: {str(e)}")
+        logging.error(f"Gemini API error: {str(e)}")
         return None
 
 def get_api_list():
