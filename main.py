@@ -100,12 +100,9 @@ class APIDocumentationPDF(FPDF):
         self.ln(5)
 
 def generate_with_gemini(prompt, api_key):
-    """Generate content using Gemini API with rate limiting."""
+    """Generate content using Gemini API."""
     if not api_key:
         return None
-
-    # Check rate limits before making the API call
-    rate_limiter.check_limits()
 
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-pro')
@@ -120,8 +117,6 @@ def generate_with_gemini(prompt, api_key):
                 max_output_tokens=512
             )
         )
-        # Increment token count based on prompt and response
-        rate_limiter.total_tokens += len(prompt.split()) + len(response.text.split())
         return response.text
     except Exception as e:
         logging.error(f"Gemini API error: {str(e)}")
