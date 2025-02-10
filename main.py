@@ -69,7 +69,7 @@ def generate_with_mistral(prompt, api_key):
 def get_api_list():
     """Fetch all available APIs using Google Discovery API with pagination."""
     try:
-        service = build('discovery', 'v1')
+        service = build('discovery', 'v1', developerKey=None)
         all_apis = []
         page_token = None
         
@@ -121,7 +121,8 @@ def generate_pdf_documentation(api_name, api_version, api_key):
     api_response = service.apis().getRest(
         api=api_name,
         version=correct_version,
-        fields='*'
+        fields='*',
+        key=None
     ).execute()
 
     # API Overview
