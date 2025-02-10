@@ -88,10 +88,10 @@ def get_api_list():
         
         while True:
             # Get current page of results
-            apis_response = service.apis().list(
-                preferred=True,
-                pageToken=page_token
-            ).execute()
+            request = service.apis().list(preferred=True)
+            if page_token:
+                request.pageToken = page_token
+            apis_response = request.execute()
             
             # Add items from current page
             if 'items' in apis_response:
@@ -126,14 +126,51 @@ def generate_pdf_documentation(api_name, api_version, api_key):
     if 'description' in api_response:
         pdf.chapter_body(api_response['description'])
 
-    # Document endpoints
-    for endpoint_name, endpoint in api_response.get('resources', {}).get('methods', {}).items():
-        pdf.add_page()
-        pdf.chapter_title(f"Endpoint: {endpoint_name}")
+    def document_resource(resource_data, resource_name=""):
+        # Document methods in current resource
+        for method_name, method in resource_data.get('methods', {}).items():
+            pdf.add_page()
+            endpoint_path = f"{resource_name}.{method_name}" if resource_name else method_name
+            pdf.chapter_title(f"Endpoint: {endpoint_path}")
 
-        # Basic endpoint info
-        pdf.chapter_body(f"HTTP Method: {endpoint.get('httpMethod', 'N/A')}")
-        pdf.chapter_body(f"Path: {endpoint.get('path', 'N/A')}")
+            # Basic endpoint info
+            pdf.chapter_body(f"HTTP Method: {method.get('httpMethod', 'N/A')}")
+            pdf.chapter_body(f"Path: {method.get('path', 'N/A')}")
+            if method.get('description'):
+                pdf.chapter_body(f"Description: {method['description']}")
+
+            # AI documentation for this endpoint
+            ai_prompt = f"""
+            For the {api_name} API endpoint: {method['httpMethod']} {method['id']}
+            Generate:
+            1. A friendly technical description with common use cases.
+            2. Example request with placeholder values.
+            3. Common parameters and their purposes.
+            """
+            ai_content = generate_with_gemini(ai_prompt, api_key)
+            if ai_content:
+                pdf.chapter_title("AI-Generated Documentation")
+                pdf.chapter_body(ai_content)
+
+            # Example code
+            example_prompt = f"""
+            Create a practical Python code example for this API endpoint:
+            Service: {method['id']}
+            Include realistic parameters and error handling.
+            """
+            code_example = generate_with_gemini(example_prompt, api_key)
+            if code_example:
+                pdf.chapter_title("Example Code")
+                pdf.code_section(code_example)
+
+        # Recursively process nested resources
+        for nested_name, nested_resource in resource_data.get('resources', {}).items():
+            new_resource_name = f"{resource_name}.{nested_name}" if resource_name else nested_name
+            document_resource(nested_resource, new_resource_name)
+
+    # Start documenting from root resources
+    for resource_name, resource in api_response.get('resources', {}).items():
+        document_resource(resource, resource_name)
 
         # AI-generated content
         ai_prompt = f"""
