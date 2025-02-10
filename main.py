@@ -9,51 +9,8 @@ from fpdf import FPDF
 import json
 import tempfile
 import logging
-import time
 
 app = Flask(__name__)
-
-class RateLimiter:
-    def __init__(self):
-        self.minute_requests = 0
-        self.day_requests = 0
-        self.total_tokens = 0
-        self.last_minute = 0
-        self.last_day = 0
-
-    def check_limits(self):
-        current_minute = int(time.time() / 60)
-        current_day = int(time.time() / (24 * 60 * 60))
-
-        # Reset counters if we're in a new time period
-        if current_minute > self.last_minute:
-            self.minute_requests = 0
-            self.last_minute = current_minute
-        
-        if current_day > self.last_day:
-            self.day_requests = 0
-            self.last_day = current_day
-
-        # Check limits
-        if self.minute_requests >= 15:  # 15 RPM
-            time.sleep(60 - (time.time() % 60))  # Wait until next minute
-            self.minute_requests = 0
-        
-        if self.total_tokens >= 1000000:  # 1,000,000 TPM
-            time.sleep(60 - (time.time() % 60))  # Wait until next minute
-            self.total_tokens = 0
-            
-        if self.day_requests >= 1500:  # 1,500 RPD
-            sleep_time = (24 * 60 * 60) - (time.time() % (24 * 60 * 60))
-            time.sleep(sleep_time)  # Wait until next day
-            self.day_requests = 0
-
-        self.minute_requests += 1
-        self.day_requests += 1
-        self.total_tokens += 1
-
-rate_limiter = RateLimiter()
-
 console = Console()
 
 # Set up logging
@@ -125,7 +82,6 @@ def generate_with_gemini(prompt, api_key):
 def get_api_list():
     """Fetch all available APIs using Google Discovery API with pagination."""
     try:
-        rate_limiter.check_limits()
         service = build('discovery', 'v1')
         all_apis = []
         page_token = None
