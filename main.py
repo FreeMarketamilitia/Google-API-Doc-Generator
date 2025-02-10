@@ -111,11 +111,11 @@ def generate_pdf_documentation(api_name, api_version, api_key):
     for endpoint_name, endpoint in api_response.get('resources', {}).get('methods', {}).items():
         pdf.add_page()
         pdf.chapter_title(f"Endpoint: {endpoint_name}")
-        
+
         # Basic endpoint info
         pdf.chapter_body(f"HTTP Method: {endpoint.get('httpMethod', 'N/A')}")
         pdf.chapter_body(f"Path: {endpoint.get('path', 'N/A')}")
-        
+
         # AI-generated content
         ai_prompt = f"""
         For the {api_name} API endpoint: {endpoint['httpMethod']} {endpoint['id']}
@@ -140,23 +140,33 @@ def generate_pdf_documentation(api_name, api_version, api_key):
             pdf.chapter_title("Example Code")
             pdf.code_section(code_example)
 
-    # Save to temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    pdf.output(temp_file.name)
-    return temp_file.name
+    # Create output directory if it doesn't exist
+    output_dir = os.path.join(os.getcwd(), 'generated_docs')
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Save PDF file
+    pdf_filename = os.path.join(output_dir, f"{api_name}_documentation.pdf")
+    pdf.output(pdf_filename)
+    return pdf_filename
+
+def generate_colab_notebook(api_name, api_version, notebook_filename, api_key):
+    #Implementation for generating colab notebook.  This function was not provided in the original code, but is referenced.  A placeholder implementation is provided below, but a full implementation would be needed for a production-ready application
+    with open(notebook_filename, 'w') as f:
+        json.dump({"cells":[{"cell_type":"markdown", "metadata":{},"source":["# Colab Notebook for "+api_name]}]}, f)
+    return notebook_filename
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     message = None
     error = False
     apis = []
-    pdf_path = None
+    generated_files = {}
 
     if request.method == 'POST':
         api_key = request.form.get('api_key')
         api_name = request.form.get('api_name')
         api_version = request.form.get('api_version', 'v1')
-        output_format = request.form.get('output_format', 'colab')
 
         apis = get_api_list()
         if not apis:
@@ -164,16 +174,24 @@ def index():
             error = True
         elif api_name:
             try:
-                if output_format == 'colab':
-                    notebook_filename = f"{api_name}_colab_notebook.ipynb"
-                    generate_colab_notebook(api_name, api_version, notebook_filename, api_key)
-                    message = "Colab notebook generated successfully!"
-                else:
-                    pdf_path = generate_pdf_documentation(api_name, api_version, api_key)
-                    message = "PDF documentation generated successfully!"
+                # Create output directory
+                output_dir = os.path.join(os.getcwd(), 'generated_docs')
+                os.makedirs(output_dir, exist_ok=True)
+
+                # Generate both formats
+                notebook_filename = os.path.join(output_dir, f"{api_name}_colab_notebook.ipynb")
+                pdf_filename = generate_pdf_documentation(api_name, api_version, api_key)
+                generate_colab_notebook(api_name, api_version, notebook_filename, api_key)
+
+                generated_files = {
+                    'notebook': notebook_filename,
+                    'pdf': pdf_filename
+                }
+                message = "Documentation generated successfully in both formats!"
             except Exception as e:
                 message = f"Error: {str(e)}"
                 error = True
+                logging.error(f"Documentation generation error: {str(e)}")
         else:
             message = "Please select an API"
             error = True
@@ -181,21 +199,30 @@ def index():
     return render_template('index.html', 
                          message=message, 
                          error=error, 
-                         apis=apis, 
-                         pdf_path=pdf_path)
+                         apis=apis,
+                         generated_files=generated_files)
 
-@app.route('/download_pdf/<api_name>')
-def download_pdf(api_name):
-    """Download generated PDF documentation."""
+@app.route('/download/<doc_type>/<api_name>')
+def download_doc(doc_type, api_name):
+    """Download generated documentation."""
     try:
-        pdf_path = f"/tmp/{api_name}_documentation.pdf"
-        return send_file(pdf_path, 
-                        mimetype='application/pdf',
+        output_dir = os.path.join(os.getcwd(), 'generated_docs')
+        if doc_type == 'pdf':
+            file_path = os.path.join(output_dir, f"{api_name}_documentation.pdf")
+            mimetype = 'application/pdf'
+            download_name = f"{api_name}_documentation.pdf"
+        else:  # notebook
+            file_path = os.path.join(output_dir, f"{api_name}_colab_notebook.ipynb")
+            mimetype = 'application/json'
+            download_name = f"{api_name}_colab_notebook.ipynb"
+
+        return send_file(file_path, 
+                        mimetype=mimetype,
                         as_attachment=True,
-                        download_name=f"{api_name}_documentation.pdf")
+                        download_name=download_name)
     except Exception as e:
-        logging.error(f"PDF download error: {str(e)}")
-        return "Error downloading PDF", 500
+        logging.error(f"Download error: {str(e)}")
+        return "Error downloading file", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
