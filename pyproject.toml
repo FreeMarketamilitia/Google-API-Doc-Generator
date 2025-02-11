@@ -1,8 +1,9 @@
-[project]
+[tool.poetry]
 name = "google-doc-generator"
 version = "0.1.0"
 description = "A tool that integrates Google APIs to generate dynamic Google Docs, handle feedback, grading, and automate tasks for educators."
-requires-python = ">=3.11"
+authors = ["freemarkmilitia@nostates.com"]
+license = "MIT"
 dependencies = [
     "email-validator>=2.2.0",
     "flask>=3.1.0",
