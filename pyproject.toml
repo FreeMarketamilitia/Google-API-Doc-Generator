@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
+name = "google-doc-generator"
 version = "0.1.0"
-description = "Add your description here"
+description = "A tool that integrates Google APIs to generate dynamic Google Docs, handle feedback, grading, and automate tasks for educators."
 requires-python = ">=3.11"
 dependencies = [
     "email-validator>=2.2.0",
