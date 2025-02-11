@@ -464,7 +464,9 @@ def download_doc(doc_type, api_name):
     except Exception as e:
         logging.error(f"Download error: {str(e)}")
         return "Error downloading file", 500
-
+        
+def home():
+    return render_template("index.html")  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
-    return render_template("index.html")
+
