@@ -1,42 +1,177 @@
 <!DOCTYPE html>
 <html data-bs-theme="dark">
 <head>
-    <title>Google API Documentation Generator</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <title>🚀 Google API Documentation Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Roboto', sans-serif;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .form-control, .form-select {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+        }
+        .form-control::placeholder {
+            color: #8b949e;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 5px #58a6ff;
+            border-color: #58a6ff;
+        }
+        .btn-primary {
+            background-color: #238636;
+            border-color: #238636;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2ea043;
+            transform: translateY(-2px);
+        }
+        .btn-success, .btn-info {
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover, .btn-info:hover {
+            transform: translateY(-2px);
+        }
+        .alert {
+            background-color: #161b22;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+        .spinner {
+            display: none;
+        }
+        .spinner.show {
+            display: block;
+            margin: 0 auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #58a6ff;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .expandable-section {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .expandable-section h6 {
+            cursor: pointer;
+            color: #58a6ff;
+            font-weight: bold;
+        }
+        .expandable-content {
+            display: none;
+            margin-top: 10px;
+        }
+        .expandable-content.show {
+            display: block;
+        }
+        .section-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .section-header i {
+            margin-right: 10px;
+        }
+        .no-results {
+            text-align: center;
+            color: #8b949e;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container py-4">
         <div class="card shadow">
             <div class="card-body">
-                <h1 class="card-title text-center mb-4">Google API Documentation Generator</h1>
+                <h1 class="card-title text-center mb-4">🚀 Google API Documentation Generator</h1>
 
-                <form method="POST">
+                <form id="apiForm" method="POST">
+                    <div class="section-header">
+                        <i class="fas fa-key"></i> API Key
+                    </div>
                     <div class="mb-3">
-                        <label for="api_key" class="form-label">Mistral API Key:</label>
+                        <label for="api_key" class="form-label" data-bs-toggle="tooltip" title="🔑 Enter your API key to unlock Mistral features!">
+                            Mistral API Key:
+                        </label>
                         <input type="text" class="form-control" id="api_key" name="api_key" required 
                                placeholder="Enter your Mistral API key"
                                value="{{ request.form.get('api_key', '') }}">
-                        <small class="form-text text-muted">Get your free API key from <a href="https://mistral.ai" target="_blank">mistral.ai</a></small>
+                        <small class="form-text text-muted text-center d-block">
+                            Get your free API key from <a href="https://mistral.ai" target="_blank">mistral.ai</a>
+                        </small>
                     </div>
 
                     {% if apis %}
+                    <div class="section-header">
+                        <i class="fas fa-database"></i> API Selection
+                    </div>
                     <div class="mb-3">
-                        <label for="api_search" class="form-label">Search APIs:</label>
-                        <input type="text" class="form-control mb-2" id="api_search" placeholder="Search APIs...">
+                        <label for="api_search" class="form-label" data-bs-toggle="tooltip" title="🔍 Search for APIs by name.">
+                            Search APIs:
+                        </label>
+                        <input type="text" class="form-control mb-2" id="api_search" placeholder="Type to search...">
                         
-                        <label for="api_name" class="form-label">Select API:</label>
+                        <label for="api_name" class="form-label" data-bs-toggle="tooltip" title="📜 Choose an API to generate documentation.">
+                            Select API:
+                        </label>
                         <select class="form-select" id="api_name" name="api_name" required>
                             <option value="">Choose an API...</option>
                             {% for api in apis %}
-                            <option value="{{ api.name }}">{{ api.title }}</option>
+                            <option value="{{ api.name }}" data-description="{{ api.description }}">
+                                {{ api.title }}
+                            </option>
                             {% endfor %}
                         </select>
+
+                        <div id="apiDetails" class="expandable-section mt-3">
+                            <h6>📋 API Details <i class="fas fa-caret-down"></i></h6>
+                            <div class="expandable-content">
+                                <p id="apiDescription">Select an API to view details here.</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Generate Documentation</button>
+                    <div class="section-header">
+                        <i class="fas fa-cogs"></i> Generate
                     </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            Generate Documentation 📄
+                        </button>
+                    </div>
+
+                    <div class="spinner mt-4"></div>
                     {% endif %}
                 </form>
 
@@ -47,33 +182,58 @@
                 {% endif %}
 
                 {% if generated_files %}
-                <div class="mt-4">
-                    <h5 class="mb-3">Download Generated Documentation:</h5>
-                    <div class="d-flex gap-3 justify-content-center">
-                        <a href="{{ url_for('download_doc', doc_type='pdf', api_name=request.form.get('api_name')) }}" 
-                           class="btn btn-success">
-                            <i class="fas fa-file-pdf me-2"></i>Download PDF
-                        </a>
-                        <a href="{{ url_for('download_doc', doc_type='notebook', api_name=request.form.get('api_name')) }}" 
-                           class="btn btn-info">
-                            <i class="fas fa-notebook me-2"></i>Download Colab Notebook
-                        </a>
-                    </div>
+                <div class="section-header">
+                    <i class="fas fa-download"></i> Download Your Documentation
+                </div>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('download_doc', doc_type='pdf', api_name=request.form.get('api_name')) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-file-pdf me-2"></i>Download PDF
+                    </a>
+                    <a href="{{ url_for('download_doc', doc_type='notebook', api_name=request.form.get('api_name')) }}" 
+                       class="btn btn-info">
+                        <i class="fas fa-book me-2"></i>Download Colab Notebook
+                    </a>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
+
     <script>
+        // Handle API Search
         document.getElementById('api_search').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const select = document.getElementById('api_name');
             const options = select.getElementsByTagName('option');
-            
+            let hasResults = false;
+
             for (let option of options) {
                 const text = option.text.toLowerCase();
                 option.style.display = text.includes(searchTerm) ? '' : 'none';
+                if (text.includes(searchTerm)) hasResults = true;
             }
+
+            if (!hasResults) {
+                document.getElementById('api_name').innerHTML = '<option value="">No results found</option>';
+            }
+        });
+
+        // Expandable API Details
+        document.getElementById('api_name').addEventListener('change', function(e) {
+            const selectedOption = e.target.selectedOptions[0];
+            const description = selectedOption.dataset.description || "No details available for this API.";
+            document.getElementById('apiDescription').textContent = description;
+            document.querySelector('.expandable-content').classList.add('show');
+        });
+
+        document.querySelector('.expandable-section h6').addEventListener('click', function() {
+            document.querySelector('.expandable-content').classList.toggle('show');
+        });
+
+        // Show Spinner on Submit
+        document.getElementById('apiForm').addEventListener('submit', function() {
+            document.querySelector('.spinner').classList.add('show');
         });
     </script>
 </body>
