@@ -467,3 +467,4 @@ def download_doc(doc_type, api_name):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
+    return render_template("index.html")
